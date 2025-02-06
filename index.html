@@ -6,7 +6,7 @@
         let expenses = [];
 
         async function fetchExpenses() {
-            const response = await fetch('https://script.google.com/macros/s/AKfycby6iP1Ly-HLynNQGPurkfKmnzxbJC8kCN4gZNAb7Gij9vHvo4b4yKlcfJcI5BD-lqiffg/exec');
+            const response = await fetch('https://script.google.com/macros/s/AKfycbwxiEduulfd3P7qPY7VHL1hLBDfDUsKNRziwVQ2_DbeA4_ZUlhZX89sr361Uzmo3kwNcQ/exec');
             expenses = await response.json();
             displayExpenses();
         }
