@@ -42,9 +42,28 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-right: 10px;
         }
         button:hover {
             background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        .edit-btn:hover {
+            background-color: #0b7dda;
+        }
+        .cancel-btn {
+            background-color: #808080;
+        }
+        .cancel-btn:hover {
+            background-color: #666666;
         }
         table {
             width: 100%;
@@ -64,6 +83,13 @@
             padding: 15px;
             background-color: #e8f5e9;
             border-radius: 4px;
+        }
+        .action-buttons {
+            white-space: nowrap;
+        }
+        .action-buttons button {
+            padding: 5px 10px;
+            margin: 0 2px;
         }
     </style>
 </head>
@@ -97,7 +123,9 @@
             <input type="date" id="date" required>
         </div>
         
-        <button onclick="submitExpense()">Add Expense</button>
+        <button id="submitBtn" onclick="submitExpense()">Add Expense</button>
+        <button id="updateBtn" onclick="updateExpense()" style="display: none;">Update Expense</button>
+        <button id="cancelBtn" onclick="cancelEdit()" class="cancel-btn" style="display: none;">Cancel</button>
         
         <div class="summary" id="summary">
             <h2>Summary</h2>
@@ -112,6 +140,7 @@
                     <th>Name</th>
                     <th>Category</th>
                     <th>Amount</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="expenseList"></tbody>
@@ -126,6 +155,7 @@
 
         // Initialize the expenses array
         let expenses = [];
+        let editingIndex = -1;
 
         function submitExpense() {
             const name = document.getElementById('name').value;
@@ -159,10 +189,87 @@
             clearForm();
         }
 
+        function editExpense(index) {
+            editingIndex = index;
+            const expense = expenses[index];
+            
+            // Fill form with expense data
+            document.getElementById('name').value = expense.name;
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('category').value = expense.category;
+            document.getElementById('date').value = expense.date;
+            
+            // Show/hide appropriate buttons
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'inline';
+            document.getElementById('cancelBtn').style.display = 'inline';
+        }
+
+        function updateExpense() {
+            if (editingIndex === -1) return;
+
+            const name = document.getElementById('name').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+
+            if (!name || !amount || !category || !date) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            expenses[editingIndex] = {
+                date: date,
+                name: name,
+                category: category,
+                amount: amount
+            };
+
+            // Update Google Sheet
+            updateGoogleSheet(editingIndex);
+            
+            // Update UI
+            updateExpenseList();
+            updateSummary();
+            
+            // Reset form and buttons
+            cancelEdit();
+        }
+
+        function deleteExpense(index) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses.splice(index, 1);
+                
+                // Delete from Google Sheet
+                deleteFromGoogleSheet(index);
+                
+                // Update UI
+                updateExpenseList();
+                updateSummary();
+            }
+        }
+
+        function cancelEdit() {
+            editingIndex = -1;
+            clearForm();
+            document.getElementById('submitBtn').style.display = 'inline';
+            document.getElementById('updateBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+        }
+
         function submitToGoogleSheet(expense) {
             // This is where you would implement the Google Sheets API call
-            // You'll need to set up Google Sheets API and authentication
             console.log('Submitting to Google Sheet:', expense);
+        }
+
+        function updateGoogleSheet(index) {
+            // This is where you would implement the Google Sheets API update
+            console.log('Updating Google Sheet row:', index);
+        }
+
+        function deleteFromGoogleSheet(index) {
+            // This is where you would implement the Google Sheets API delete
+            console.log('Deleting from Google Sheet row:', index);
         }
 
         function updateExpenseList() {
@@ -172,12 +279,20 @@
             // Sort expenses by date (most recent first)
             expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            expenses.forEach(expense => {
+            expenses.forEach((expense, index) => {
                 const row = tbody.insertRow();
                 row.insertCell(0).textContent = moment(expense.date).format('MMM D, YYYY');
                 row.insertCell(1).textContent = expense.name;
                 row.insertCell(2).textContent = expense.category;
                 row.insertCell(3).textContent = `$${expense.amount.toFixed(2)}`;
+                
+                // Add action buttons
+                const actionsCell = row.insertCell(4);
+                actionsCell.className = 'action-buttons';
+                actionsCell.innerHTML = `
+                    <button class="edit-btn" onclick="editExpense(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteExpense(${index})">Delete</button>
+                `;
             });
         }
 
@@ -200,9 +315,10 @@
         }
 
         function clearForm() {
+            document.getElementById('name').value = '';
             document.getElementById('amount').value = '';
             document.getElementById('category').value = 'Food';
-            document.getElementById('date').value = '';
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
         }
 
         // Set today's date as default
