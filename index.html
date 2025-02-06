@@ -6,8 +6,9 @@
         let expenses = [];
 
         async function fetchExpenses() {
-            const response = await fetch('https://script.google.com/macros/s/AKfycbwxiEduulfd3P7qPY7VHL1hLBDfDUsKNRziwVQ2_DbeA4_ZUlhZX89sr361Uzmo3kwNcQ/exec');
+            const response = await fetch('YOUR_GOOGLE_SHEETS_WEB_APP_URL');
             expenses = await response.json();
+            populateUserDropdown();  // Populate dropdown after data is loaded
             displayExpenses();
         }
 
@@ -40,12 +41,7 @@
             document.getElementById("userFilter").innerHTML = userDropdown;
         }
 
-        async function init() {
-            await fetchExpenses();
-            populateUserDropdown();
-        }
-
-        window.onload = init;
+        window.onload = fetchExpenses;
     </script>
 </head>
 <body>
