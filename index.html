@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <script>
+        let expenses = [];
+
+        async function fetchExpenses() {
+            const response = await fetch('https://script.google.com/macros/s/AKfycby6iP1Ly-HLynNQGPurkfKmnzxbJC8kCN4gZNAb7Gij9vHvo4b4yKlcfJcI5BD-lqiffg/exec');
+            expenses = await response.json();
+            displayExpenses();
+        }
+
+        function displayExpenses() {
+            const selectedUser = document.getElementById("userFilter").value;
+            let table = "<tr><th>Name</th><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Payment Method</th></tr>";
+
+            expenses.forEach(expense => {
+                if (selectedUser === "All" || expense.name === selectedUser) {
+                    table += `<tr>
+                        <td>${expense.name}</td>
+                        <td>${expense.date}</td>
+                        <td>${expense.category}</td>
+                        <td>${expense.description}</td>
+                        <td>${expense.amount}</td>
+                        <td>${expense.payment_method}</td>
+                    </tr>`;
+                }
+            });
+
+            document.getElementById('expenseTable').innerHTML = table;
+        }
+
+        function populateUserDropdown() {
+            const users = [...new Set(expenses.map(expense => expense.name))];
+            let userDropdown = `<option value="All">All</option>`;
+            users.forEach(user => {
+                userDropdown += `<option value="${user}">${user}</option>`;
+            });
+            document.getElementById("userFilter").innerHTML = userDropdown;
+        }
+
+        async function init() {
+            await fetchExpenses();
+            populateUserDropdown();
+        }
+
+        window.onload = init;
+    </script>
+</head>
+<body>
+    <h2>Expense Tracker</h2>
+    <label>Select User: </label>
+    <select id="userFilter" onchange="displayExpenses()">
+        <option value="All">All</option>
+    </select>
+    <table border="1" id="expenseTable"></table>
+</body>
+</html>
